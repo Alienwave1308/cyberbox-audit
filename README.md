@@ -1,20 +1,79 @@
-# CC Security Audit — cc.zxcv.app
+# CYBERBOX — Product & Security Audit Portfolio
 
-Репозиторий с результатами security-аудита сайта CYBERBOX.
+**Объект:** [cc.zxcv.app](https://cc.zxcv.app/en) — крипто-лутбокс платформа (iGaming, pre-launch)
+**Тип аудита:** Комплексный — технический (security) + продуктовый (бизнес-логика, экономика, UX)
+**Дата:** 2026-02-20
+**Метод:** Пассивный анализ публичного фронтенда (HTML, JS-бандлы, cookies, API-поверхность)
+**Статус:** Проведён с ведома и согласия команды продукта
 
-## Файлы
+---
 
-| Файл | Описание |
+## Навигация по репозиторию
+
+| Документ | Содержание |
 |---|---|
-| [SECURITY_AUDIT.md](SECURITY_AUDIT.md) | Полный аналитический отчёт: уязвимости, код, рекомендации |
+| [SECURITY_AUDIT.md](SECURITY_AUDIT.md) | Технический + продуктовый аудит: 16 уязвимостей, бизнес-логика, экономика, роадмап |
+| [CJM_as_is.md](CJM_as_is.md) | CJM текущего состояния: путь пользователя, эмоции, риски на каждом этапе |
+| [CJM_to_be.md](CJM_to_be.md) | CJM целевого состояния: что меняем, gap-анализ, роадмап, метрики успеха |
+| [PM_TEST_ASSIGNMENT.md](PM_TEST_ASSIGNMENT.md) | PM-задание Senior-уровня: фичи, PSP-интеграция, кризисная диагностика, risk management |
+| [PROCESS.md](PROCESS.md) | Jira-структура проекта + CI/CD pipeline + branch strategy |
 
-## Краткий итог
+---
 
-- **2 CRITICAL** — auth cookies без `httpOnly`/`secure`
-- **4 HIGH** — CSRF, нет CSP, нет CAPTCHA, FingerprintJS как security-токен
-- **6 MEDIUM** — API disclosure, localStorage, client-only validation, clickjacking
-- **4 LOW** — нет security.txt, sitemap, build ID виден, кросс-домен ассеты
+## Ключевые находки
 
-## Самое важное исправление
+### Технические (security)
 
-Добавить `httpOnly: true, secure: true, sameSite: "Strict"` к установке cookies `access_token` и `refresh_token`. Одна строка закрывает CRITICAL×2 + HIGH (CSRF).
+| Уровень | Кол-во | Самое критичное |
+|---|---|---|
+| CRITICAL | 2 | Auth cookies без `httpOnly`/`secure` → XSS = кража крипты |
+| HIGH | 4 | CSRF на финансовых операциях, нет CSP, нет CAPTCHA |
+| MEDIUM | 5 | localStorage с user data, clickjacking, client-only validation |
+| LOW / INFO | 5 | Build ID, Referrer-Policy, security.txt и др. |
+
+**Единственное важнейшее исправление:** `httpOnly + secure + sameSite: Strict` на `access_token` и `refresh_token` — 1 коммит на сервере, закрывает CRITICAL×2 + HIGH (CSRF) одновременно.
+
+### Продуктовые и экономические
+
+| Проблема | Бизнес-импакт |
+|---|---|
+| Реферальная модель: 12% от депозита vs маржа 5–7% GGR | Математически убыточна при масштабировании |
+| Welcome Bonus без ограничения выигрыша + нет CAPTCHA | Farming-схемы: N аккаунтов × 200% бонус |
+| Нет Provably Fair | Крипто-аудитория не доверяет «чёрным ящикам» |
+| Вывод: нет SLA, статусов, комиссий | Максимальная тревога на критическом этапе |
+| TEST-заглушки в юридических документах | Блокирует легальный запуск |
+
+---
+
+## Целевые метрики (TO-BE)
+
+| Метрика | As Is | Цель |
+|---|---|---|
+| **FTD CR** (reg → первый депозит) | ~20% | **≥35% по органике** |
+| **D7 Retention** | ~10–12% | ≥22% за 90 дней |
+| **Chargeback Rate** | ~2–3%* | <1% |
+| Риск захвата аккаунта через XSS | CRITICAL | LOW |
+| Доверие крипто-аудитории (Provably Fair) | Отсутствует | Реализовано |
+
+*допущение на основе отраслевых ориентиров
+
+---
+
+## Методология
+
+```
+Аудит в 4 слоя:
+  1. Технический     → JS-бандлы, cookies, HTTP-заголовки, API-поверхность
+  2. Продуктовый     → CJM, онбординг, бонусная система, retention-механики
+  3. Экономический   → unit-экономика, реферальная модель, стоимость злоупотреблений
+  4. Compliance      → AML/KYC, gambling-лицензирование, юридические документы
+```
+
+**Инструменты:** Claude Code (JS-анализ, API-разведка), структурный продуктовый анализ.
+**Ограничение:** Серверный код, база данных и инфраструктура не проверялись — только публичный фронтенд.
+
+---
+
+## Связанные документы
+
+- [PROCESS.md](PROCESS.md) — структура рабочего процесса: Jira + CI/CD pipeline + branch strategy
