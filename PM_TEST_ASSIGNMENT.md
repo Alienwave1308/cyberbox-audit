@@ -1,8 +1,4 @@
-# Senior PM Test Assignment — CYBERBOX (cc.zxcv.app)
-
-**Платформа:** Crypto lootbox gambling (Next.js, REST API)
-**Дата:** 2026-02-20
-**Контекст:** Результаты технического аудита фронтенда + бизнес-анализ продукта
+# Senior PM Test Assignment — CYBERBOX
 
 > *Допущения там, где нет точных данных, помечены курсивом.*
 
